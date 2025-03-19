@@ -1,9 +1,5 @@
-using System;
-using System.IO;
 using System.Net.Sockets;
-using System.Numerics;
-using System.Threading;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 public class ClientHandler
 {
@@ -30,7 +26,6 @@ public class ClientHandler
                 inStream = new NetworkStream(s);
                 outStream = new NetworkStream(s);
                 clientUtilities = new ClientUtilities(OutStream); // Initialize clientUtilities here
-
 
             }
             catch (IOException ioe)
@@ -102,15 +97,6 @@ public class ClientHandler
         OutStream.WriteByte(0); // ???? needed that to stop client from crashing
         OutStream.WriteFrameSizeWord(OutStream.CurrentOffset - ofs);
 
-        //clientUtilities.OpenInterface(5292, 5063);
-        var rand = new Random();
-
-        //CreateNoobyItems();
-        CreateGroundItem(rand.Next(1,1000), 1000, playerPosX, playerPosY);
-        ShowInterface(5292);
-        GiveItem(rand.Next(), 10000);
-
-
         int[] SideBarIds = {
         2423,3917,638,3213,1644,5608,12855,
         -1,5065,5715,2449,904,147,962,
@@ -126,6 +112,18 @@ public class ClientHandler
         FlushOutStream();
     }
 
+    public void DropItem(int slot)
+    {
+
+        /*OutStream.CreateFrame(87);        // drop item
+            int droppedItem = OutStream.ReadUnsignedWordA();
+            //OutStream.ReadUnsignedByte() + inStream.readUnsignedByte();
+            OutStream.ReadUnsignedWordA();
+        Console.WriteLine("dropItem: " + droppedItem + " Slot: " + slot);
+        return;*/
+        //println_debug("dropItem: "+droppedItem+" Slot: "+slot);
+        Console.WriteLine("Drop Clicked");
+    }
     public void SetSidebarInterface(int menuId, int form)
     {
         OutStream.CreateFrame(71);
@@ -136,8 +134,8 @@ public class ClientHandler
     public void CreateGroundItem(int itemID, int itemAmount, int itemX, int itemY)
     {// Phate: Omg fucking sexy! creates item at absolute X and Y
         OutStream.CreateFrame(85);                              // Phate: Spawn ground item
-        //OutStream.WriteByteC((itemY - 8 * mapRegionY));
-        //OutStream.WriteByteC((itemX - 8 * mapRegionX));
+                                                                //OutStream.WriteByteC((itemY - 8 * mapRegionY));
+                                                                //OutStream.WriteByteC((itemX - 8 * mapRegionX));
         OutStream.WriteByteC(itemY);
         OutStream.WriteByteC(itemX);
         OutStream.CreateFrame(44);
@@ -159,10 +157,12 @@ public class ClientHandler
         OutStream.CreateFrameVarSizeWord(34);
         OutStream.WriteWord(3214);
         OutStream.WriteByte(4);
-        OutStream.WriteWord(id+1);
+        OutStream.WriteWord(id + 1);
         OutStream.WriteByte(amount);//this is correct place but its giving wrong value?
         OutStream.EndFrameVarSizeWord();
     }
+
+
 
     public void Update()
     {
@@ -175,7 +175,39 @@ public class ClientHandler
         while (packetHandler != null && packetHandler.InterpreteIncomingPackets()) ;
         if (!ClientConnected) return;
 
-        //GiveItem(995,100);
+        GiveItem(995, 100);
+        //DropItem(995);
+        int packetType = packetHandler.PacketType;
+
+        switch (packetType)
+        {
+            case 0:
+                Console.WriteLine("Reset idle packet");
+                break;
+            case 12:
+                Console.WriteLine("Clicked item on ground");
+                break;
+            case 45:
+                Console.WriteLine("Use bank");
+                break;
+            case 51:
+                Console.WriteLine("Open door");
+                break;
+            case 87:
+                Console.WriteLine("Mouse click");
+                break;
+            case 241: //Mouse Clicks
+                int ins = InStream.ReadDWord();
+                Console.WriteLine("Mouse clicks");
+                break;
+            case 147:
+                Console.WriteLine("Use quickly bank");
+                ShowInterface(5292);
+                break;
+            default:
+                Console.WriteLine("Unknown packet type: " + packetType);
+                break;
+        }
         //Server.PrintActivePlayers();
         /*
         //test
@@ -213,9 +245,6 @@ public class ClientHandler
         //test
         */
         //
-        var rand = new Random();
-
-        GiveItem(rand.Next(0,1000), 10000);
 
         // Handle outgoing packets
         try
@@ -248,42 +277,22 @@ public class ClientHandler
     {
         try
         {
-            if (mySock != null && mySock.Connected && outStream != null && OutStream != null)
+            if (OutStream != null && outStream != null)
             {
-                //Console.WriteLine("Flushing OutStream to client.");
+                // Write the buffer to the network stream
                 outStream.Write(OutStream.Buffer, 0, OutStream.CurrentOffset);
                 OutStream.CurrentOffset = 0; // reset
             }
             else
             {
-                Console.WriteLine("Error: Socket is not connected or output stream is null.");
-                ClientConnected = false; // Mark the client as disconnected
+                Console.WriteLine("Error: Output stream is null.");
             }
-        }
-        catch (SocketException ex)
-        {
-            Console.WriteLine("SocketException: Unable to write data to the transport connection.");
-            Console.WriteLine($"Error Code: {ex.SocketErrorCode}");
-            Console.WriteLine(ex);
-            ClientConnected = false; // Mark the client as disconnected
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine("IOException: Unable to write data to the transport connection.");
-            Console.WriteLine(ex);
-            ClientConnected = false; // Mark the client as disconnected
-        }
-        catch (ObjectDisposedException ex)
-        {
-            Console.WriteLine("Error: The stream has been disposed.");
-            Console.WriteLine(ex);
-            ClientConnected = false; // Mark the client as disconnected
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Unexpected error occurred while writing to the stream.");
-            Console.WriteLine(ex);
-            ClientConnected = false; // Mark the client as disconnected
+            Console.WriteLine("Error in FlushOutStream: " + ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            ClientConnected = false;
         }
     }
 
@@ -341,8 +350,6 @@ public class ClientHandler
             }
         }
     }
-
-
 
 
 

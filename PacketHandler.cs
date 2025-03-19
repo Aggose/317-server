@@ -7,7 +7,8 @@ public class PacketHandler
     private NetworkStream inStream;
     private Stream InStream;
     private Cryption InStreamDecryption;
-    private int PacketSize = 0, PacketType = 0;
+    private int PacketSize = 0;
+    public int PacketType = 0;
     private int TimeOutCounter = 0;
     public bool ClientConnected = false;
 

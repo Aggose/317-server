@@ -92,7 +92,17 @@ public class Stream
         Buffer[CurrentOffset++] = (byte)(i + 128);
         //console.WriteLine($"WriteByteA: {i}, CurrentOffset: {CurrentOffset}");
     }
+    public void WriteByteS(int i)
+    {
+        Buffer[CurrentOffset++] = (byte)(128 - i);
+    }
 
+    public void WriteBytes_Reverse(byte[] abyte0, int i, int j)
+    {
+        for (int k = (j + i) - 1; k >= j; k--)
+            Buffer[CurrentOffset++] = abyte0[k];
+
+    }
     public void WriteBytes(byte[] abyte0, int i, int j)
     {
         for (int k = j; k < j + i; k++)
